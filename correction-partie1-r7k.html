@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Correction partie 1 | Examen Kop Store</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="topbar">Examen Google Tag Manager &amp; GA4 — <strong>correction</strong></div>
+<header class="site-header"><div class="wrap"><span class="logo"><span class="logo-mark"></span>Kop Store</span><span class="pill pill-red">Correction · Partie 1</span></div></header>
+<main>
+<div class="wrap exo-page">
+  <div class="exo-header"><span class="eyebrow">Correction · Partie 1</span><h1>Installation de GA4 et GTM</h1></div>
+<section class="exo">
+  <h2>1.1 — La propriété et le flux GA4</h2>
+  <ol class="steps-list">
+    <li>GA4 → <strong>Administration</strong> (roue dentée) → <strong>Créer</strong> → <strong>Propriété</strong>.</li>
+    <li>Nom « Kop Store Examen – Nom », fuseau horaire <strong>France</strong>, devise <strong>Euro (EUR)</strong>. Renseigner les informations sur l'entreprise et les objectifs, puis <strong>Créer</strong>.</li>
+    <li>Plate-forme : <strong>Web</strong>. URL du site : <code>votre-pseudo.github.io</code>, nom du flux : « Site examen ». Laisser la <strong>mesure améliorée</strong> activée, puis <strong>Créer le flux</strong>.</li>
+    <li>Copier l'<strong>ID de mesure</strong> affiché en haut à droite : <code>G-XXXXXXXXXX</code>. On le retrouve plus tard dans Administration → Collecte et modification des données → Flux de données.</li>
+  </ol>
+  <div class="hint"><strong>Réponse attendue :</strong> la <strong>propriété</strong> est l'espace qui contient les données et les rapports d'un site (ou d'un ensemble site + application). Le <strong>flux</strong> est la source qui alimente cette propriété : un flux Web pour un site, un flux iOS ou Android pour une application. C'est le flux qui fournit l'ID de mesure.</div>
+</section>
+
+<section class="exo">
+  <h2>1.2 — Installer GTM</h2>
+  <h3>Créer le conteneur</h3>
+  <ol class="steps-list">
+    <li><a href="https://tagmanager.google.com" target="_blank" rel="noopener">tagmanager.google.com</a> → choisir le compte → <strong>Créer un conteneur</strong> (ou créer un compte si besoin).</li>
+    <li>Nom « Kop Store Examen – Nom », plate-forme cible <strong>Web</strong> → <strong>Créer</strong>.</li>
+    <li>GTM affiche les deux codes d'installation. On les retrouve plus tard dans <strong>Administration → Installer Google Tag Manager</strong>.</li>
+  </ol>
+  <h3>Toutes les pages : <code>gtm-install.js</code></h3>
+  <ol class="steps-list">
+    <li>Dans le dépôt GitHub, ouvrir <code>gtm-install.js</code> → icône crayon.</li>
+    <li>Ligne 8, coller l'ID du conteneur entre les guillemets :</li>
+  </ol>
+  <pre><code>var GTM_ID = &quot;GTM-ABC1234&quot;;</code></pre>
+  <ol class="steps-list" start="3"><li><strong>Commit changes</strong>, attendre la coche verte dans l'onglet Actions, recharger le site avec Ctrl + F5. Dans la console, l'avertissement « Aucun conteneur GTM » doit avoir disparu.</li></ol>
+  <h3>La page <code>installation.html</code> : à la main</h3>
+  <p>Le code 1 se colle <strong>le plus haut possible dans le <code>&lt;head&gt;</code></strong>, juste après <code>&lt;meta charset="utf-8"&gt;</code> :</p>
+  <pre><code>&lt;!-- Google Tag Manager --&gt;
+&lt;script&gt;(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({&#x27;gtm.start&#x27;:
+new Date().getTime(),event:&#x27;gtm.js&#x27;});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!=&#x27;dataLayer&#x27;?&#x27;&amp;l=&#x27;+l:&#x27;&#x27;;j.async=true;j.src=
+&#x27;https://www.googletagmanager.com/gtm.js?id=&#x27;+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,&#x27;script&#x27;,&#x27;dataLayer&#x27;,&#x27;GTM-XXXXXXX&#x27;);&lt;/script&gt;
+&lt;!-- End Google Tag Manager --&gt;</code></pre>
+  <p>Le code 2 se colle <strong>juste après la balise d'ouverture <code>&lt;body …&gt;</code></strong> :</p>
+  <pre><code>&lt;!-- Google Tag Manager (noscript) --&gt;
+&lt;noscript&gt;&lt;iframe src=&quot;https://www.googletagmanager.com/ns.html?id=GTM-XXXXXXX&quot;
+height=&quot;0&quot; width=&quot;0&quot; style=&quot;display:none;visibility:hidden&quot;&gt;&lt;/iframe&gt;&lt;/noscript&gt;
+&lt;!-- End Google Tag Manager (noscript) --&gt;</code></pre>
+  <div class="hint"><strong>Pourquoi ces emplacements ?</strong> Le code du <code>&lt;head&gt;</code> doit se charger le plus tôt possible, pour ne rater aucune action du visiteur. Le code <code>&lt;noscript&gt;</code> ne sert qu'aux navigateurs sans JavaScript ; il doit être dans le <code>&lt;body&gt;</code>, car une <code>&lt;iframe&gt;</code> n'a pas le droit d'être dans le <code>&lt;head&gt;</code>.</div>
+  <p><strong>Erreurs fréquentes :</strong> les deux codes collés au même endroit ; l'ID oublié dans l'un des deux codes ; un code collé à l'intérieur d'une autre balise <code>&lt;script&gt;</code>.</p>
+</section>
+
+<section class="exo">
+  <h2>1.3 — Brancher GA4 dans GTM</h2>
+  <h3>La variable constante</h3>
+  <ol class="steps-list">
+    <li>Variables → Variables définies par l'utilisateur → <strong>Nouvelle</strong>.</li>
+    <li>Nom : <code>CONST - ID mesure GA4</code>. Type : <strong>Constante</strong>. Valeur : <code>G-XXXXXXXXXX</code>. Enregistrer.</li>
+  </ol>
+  <h3>La balise Google</h3>
+  <ol class="steps-list">
+    <li>Balises → <strong>Nouvelle</strong> → type <strong>Balise Google</strong>.</li>
+    <li>ID de la balise : <code>{{CONST - ID mesure GA4}}</code>.</li>
+    <li>Déclenchement : <strong>Initialisation – Toutes les pages</strong>. Nom : <code>GA4 - Balise Google</code>. Enregistrer.</li>
+  </ol>
+  <h3>La vérification</h3>
+  <ol class="steps-list">
+    <li><strong>Prévisualiser</strong> → adresse de <code>hello.html</code> → la balise Google est dans « Balises déclenchées ».</li>
+    <li>Dans la même session, aller sur <code>installation.html</code> : Tag Assistant reste connecté et la balise se déclenche aussi. Si ce n'est pas le cas, l'installation manuelle est fausse.</li>
+    <li>GA4 → Rapports → <strong>Temps réel</strong> : au moins 1 utilisateur actif.</li>
+  </ol>
+  <div class="hint"><strong>Pourquoi une constante ?</strong> Si l'ID change (nouvelle propriété, propriété de test), on le modifie à un seul endroit au lieu de rouvrir toutes les balises.</div>
+</section>
+
+<section class="exo">
+  <h2>1.4 — Accès et publication</h2>
+  <ul class="check-list">
+    <li><strong>GTM :</strong> Administration → <strong>Gestion des utilisateurs</strong> (au niveau du conteneur) → « + » → adresse du formateur, autorisation <strong>Lecture</strong>.</li>
+    <li><strong>GA4 :</strong> Administration → <strong>Gestion des accès à la propriété</strong> → « + » → adresse du formateur, rôle <strong>Lecteur</strong>.</li>
+    <li><strong>Publication :</strong> bouton <strong>Envoyer</strong> → nom de la version « Partie 1 » → <strong>Publier</strong>.</li>
+  </ul>
+</section>
+
+<section class="exo">
+  <h2>Barème</h2>
+  <table class="param-table"><thead><tr><th>Critère</th><th>Points</th></tr></thead><tbody>
+    <tr><td>Propriété + flux Web créés, réponse propriété / flux juste</td><td>1</td></tr>
+    <tr><td>ID renseigné dans gtm-install.js</td><td>0,5</td></tr>
+    <tr><td>installation.html : deux codes aux bons endroits, avec le bon ID</td><td>1</td></tr>
+    <tr><td>Constante + balise Google sur toutes les pages, vérifiée</td><td>1</td></tr>
+    <tr><td>Accès donnés + version publiée</td><td>0,5</td></tr>
+  </tbody></table>
+</section>
+</div>
+</main>
+</body>
+</html>

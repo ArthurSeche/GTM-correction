@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Correction partie 3 | Examen Kop Store</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="topbar">Examen Google Tag Manager &amp; GA4 — <strong>correction</strong></div>
+<header class="site-header"><div class="wrap"><span class="logo"><span class="logo-mark"></span>Kop Store</span><span class="pill pill-red">Correction · Partie 3</span></div></header>
+<main>
+<div class="wrap exo-page">
+  <div class="exo-header"><span class="eyebrow">Correction · Partie 3</span><h1>E-commerce</h1></div>
+<section class="exo">
+  <h2>3.1 — La configuration GTM <span class="pts">1 pt</span></h2>
+  <ol class="steps-list">
+    <li>Déclencheur <strong>Événement personnalisé</strong>, nom <code>CE - E-commerce GA4</code>, nom de l'événement :</li>
+  </ol>
+  <pre><code>^(view_item|add_to_cart|remove_from_cart|begin_checkout|add_shipping_info|add_payment_info|purchase)$</code></pre>
+  <ol class="steps-list" start="2">
+    <li>Cocher <strong>Utiliser la correspondance d'expression régulière</strong>, « Tous les événements personnalisés ».</li>
+    <li>Balise <strong>Événement GA4</strong> <code>GA4 - Événement e-commerce</code> : ID <code>{{CONST - ID mesure GA4}}</code>, nom d'événement <code>{{Event}}</code>.</li>
+    <li>Plus de paramètres → cocher <strong>Envoyer les données d'e-commerce</strong>, source <strong>Couche de données</strong>. Déclenchement : <code>CE - E-commerce GA4</code>.</li>
+  </ol>
+  <p><code>^</code> et <code>$</code> imposent une correspondance exacte : <code>purchase_test</code> ne sera pas capté. Une regex plus longue (avec <code>view_item_list</code>, <code>add_to_wishlist</code>…) est aussi juste.</p>
+</section>
+
+<section class="exo">
+  <h2>3.2 à 3.5 — Le code complet de <code>mes-tags.js</code></h2>
+  <p>À coller après les deux premières lignes du fichier (<code>window.dataLayer = …</code> et <code>window.shopHooks = …</code>). Le fichier <a href="mes-tags-correction.js">mes-tags-correction.js</a> contient le même code.</p>
+  <pre><code>/* Le dictionnaire : vocabulaire de la boutique → vocabulaire GA4 */
+function versItem(x) {
+  return {
+    item_id: x.sku,
+    item_name: x.name,
+    item_brand: x.brand,
+    item_category: x.category,
+    item_variant: x.size,
+    price: x.price,
+    quantity: x.quantity || 1
+  };
+}
+
+/* 3.2 — Vue d&#x27;un produit */
+shopHooks.viewItem = function (data) {
+  dataLayer.push({ ecommerce: null });
+  dataLayer.push({
+    event: &quot;view_item&quot;,
+    ecommerce: {
+      currency: &quot;EUR&quot;,
+      value: data.product.price,
+      items: [versItem(data.product)]
+    }
+  });
+};
+
+/* 3.3 — Ajout au panier */
+shopHooks.addToCart = function (data) {
+  var item = versItem(data.product);
+  item.item_variant = data.size;
+  item.price = data.unitPrice;
+  item.quantity = data.quantity;
+  dataLayer.push({ ecommerce: null });
+  dataLayer.push({
+    event: &quot;add_to_cart&quot;,
+    ecommerce: { currency: &quot;EUR&quot;, value: data.value, items: [item] }
+  });
+};
+
+/* 3.4 — Tunnel de commande */
+shopHooks.beginCheckout = function (data) {
+  dataLayer.push({ ecommerce: null });
+  dataLayer.push({
+    event: &quot;begin_checkout&quot;,
+    ecommerce: {
+      currency: &quot;EUR&quot;,
+      value: data.totals.subtotal - data.totals.discount,
+      coupon: data.totals.coupon || undefined,
+      items: data.lines.map(versItem)
+    }
+  });
+};
+
+shopHooks.addShippingInfo = function (data) {
+  dataLayer.push({ ecommerce: null });
+  dataLayer.push({
+    event: &quot;add_shipping_info&quot;,
+    ecommerce: {
+      currency: &quot;EUR&quot;,
+      value: data.totals.subtotal - data.totals.discount,
+      coupon: data.totals.coupon || undefined,
+      shipping_tier: data.shippingTier,
+      items: data.lines.map(versItem)
+    }
+  });
+};
+
+shopHooks.addPaymentInfo = function (data) {
+  dataLayer.push({ ecommerce: null });
+  dataLayer.push({
+    event: &quot;add_payment_info&quot;,
+    ecommerce: {
+      currency: &quot;EUR&quot;,
+      value: data.totals.subtotal - data.totals.discount,
+      coupon: data.totals.coupon || undefined,
+      payment_type: data.paymentType,
+      items: data.lines.map(versItem)
+    }
+  });
+};
+
+/* 3.5 — Achat */
+shopHooks.purchase = function (data) {
+  if (!data.firstView) return; // page rechargée : on n&#x27;envoie pas l&#x27;achat une 2e fois
+  var o = data.order;
+  dataLayer.push({ ecommerce: null });
+  dataLayer.push({
+    event: &quot;purchase&quot;,
+    ecommerce: {
+      transaction_id: o.transaction_id,
+      currency: o.currency,
+      value: Math.round((o.total - o.shipping) * 100) / 100,
+      tax: o.tax,
+      shipping: o.shipping,
+      coupon: o.coupon || undefined,
+      items: o.lines.map(versItem)
+    }
+  });
+};
+
+/* Bonus — Retrait du panier */
+shopHooks.removeFromCart = function (data) {
+  var item = versItem(data.line);
+  item.quantity = data.quantity;
+  dataLayer.push({ ecommerce: null });
+  dataLayer.push({
+    event: &quot;remove_from_cart&quot;,
+    ecommerce: { currency: &quot;EUR&quot;, value: data.value, items: [item] }
+  });
+};</code></pre>
+  <h3>Les points qui font gagner ou perdre des points</h3>
+  <ul class="check-list">
+    <li><strong>3.2 :</strong> les noms GA4 (<code>item_id</code>, pas <code>id</code> ; <code>item_name</code>, pas <code>name</code>). Une fonction de traduction comme <code>versItem</code> n'est pas obligatoire, mais elle est valorisée.</li>
+    <li><strong>3.3 :</strong> le crochet <code>addToCart</code> n'est appelé que si l'ajout réussit : un clic sans taille n'envoie rien. Le prix vient de <code>data.unitPrice</code> (105 € avec flocage), pas de <code>data.product.price</code>.</li>
+    <li><strong>3.4 :</strong> <code>shipping_tier</code> et <code>payment_type</code> sont au même niveau que <code>value</code>, dans l'objet <code>ecommerce</code>.</li>
+    <li><strong>3.5 :</strong> le test sur <code>data.firstView</code> empêche le doublon au rechargement. Le choix d'inclure ou non les frais de port dans <code>value</code> est libre, s'il est cohérent.</li>
+    <li><strong>Partout :</strong> <code>dataLayer.push({ ecommerce: null })</code> avant chaque push e-commerce.</li>
+  </ul>
+</section>
+
+<section class="exo">
+  <h2>Le test de référence</h2>
+  <table class="param-table"><thead><tr><th>Action</th><th>Événement attendu</th><th>Valeurs à vérifier</th></tr></thead><tbody>
+    <tr><td>Réinitialiser, ouvrir le maillot</td><td><code>view_item</code></td><td>item_id SRFC-DOM-26, value 90</td></tr>
+    <tr><td>« Ajouter au panier » sans taille</td><td>aucun</td><td>—</td></tr>
+    <tr><td>Taille M, quantité 1, ajouter</td><td><code>add_to_cart</code></td><td>item_variant M, quantity 1, value 90</td></tr>
+    <tr><td>Panier, code <code>GTM10</code>, « Passer la commande »</td><td><code>begin_checkout</code></td><td>value 81, coupon GTM10</td></tr>
+    <tr><td>Données de test, Express, « Continuer »</td><td><code>add_shipping_info</code></td><td>shipping_tier Express</td></tr>
+    <tr><td>PayPal, CGV, « Payer »</td><td><code>add_payment_info</code></td><td>payment_type PayPal</td></tr>
+    <tr><td>Confirmation</td><td><code>purchase</code></td><td>transaction_id KOP-…, value 81, shipping 9,9, coupon GTM10</td></tr>
+    <tr><td>Recharger la confirmation</td><td>aucun</td><td>—</td></tr>
+  </tbody></table>
+</section>
+
+<section class="exo">
+  <h2>Barème</h2>
+  <table class="param-table"><thead><tr><th>Critère</th><th>Points</th></tr></thead><tbody>
+    <tr><td>3.1 : regex + balise avec données e-commerce</td><td>1</td></tr>
+    <tr><td>3.2 : <code>view_item</code> au format GA4</td><td>1</td></tr>
+    <tr><td>3.3 : <code>add_to_cart</code> avec taille, quantité et prix flocage compris</td><td>1,25</td></tr>
+    <tr><td>3.4 : les trois événements du tunnel, avec coupon, livraison et paiement</td><td>1,75</td></tr>
+    <tr><td>3.5 : <code>purchase</code> complet (1,25) et sans doublon (0,75)</td><td>2</td></tr>
+    <tr><td>Bonus : <code>remove_from_cart</code> avec la quantité retirée</td><td>+0,5</td></tr>
+  </tbody></table>
+</section>
+</div>
+</main>
+</body>
+</html>

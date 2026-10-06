@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Correction partie 2 | Examen Kop Store</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="topbar">Examen Google Tag Manager &amp; GA4 — <strong>correction</strong></div>
+<header class="site-header"><div class="wrap"><span class="logo"><span class="logo-mark"></span>Kop Store</span><span class="pill pill-red">Correction · Partie 2</span></div></header>
+<main>
+<div class="wrap exo-page">
+  <div class="exo-header"><span class="eyebrow">Correction · Partie 2</span><h1>Tracking des éléments du site</h1></div>
+<section class="exo">
+  <h2>Avant tout : activer les variables intégrées</h2>
+  <p>Variables → Variables intégrées → <strong>Configurer</strong>, puis cocher : <code>Click Element</code>, <code>Click Classes</code>, <code>Click ID</code>, <code>Click URL</code>, <code>Click Text</code>, <code>Page Path</code>, <code>Form ID</code>.</p>
+</section>
+
+<section class="exo">
+  <h2>2.1 — Le bouton « Découvrir le maillot » <span class="pts">0,75 pt</span></h2>
+  <p><strong>Technique :</strong> clic ciblé par l'<strong>ID</strong> de l'élément (<code>hero-cta</code>, visible avec l'inspecteur : clic droit → Inspecter).</p>
+  <ol class="steps-list">
+    <li>Déclencheur <strong>Clic – Liens uniquement</strong>, « Certains clics sur des liens » : <code>Click ID</code> <em>est égal à</em> <code>hero-cta</code>. Nom : <code>Clic - CTA accueil</code>.</li>
+    <li>Balise <strong>Événement GA4</strong>, ID de mesure <code>{{CONST - ID mesure GA4}}</code>, nom d'événement <code>clic_cta_accueil</code>, sur ce déclencheur.</li>
+  </ol>
+  <p class="expected"><strong>Test :</strong> clic sur « Découvrir le maillot » → balise déclenchée ; clic sur « Voir la boutique » → non déclenchée.</p>
+</section>
+
+<section class="exo">
+  <h2>2.2 — Téléphone et e-mail <span class="pts">1 pt</span></h2>
+  <p><strong>Technique :</strong> la variable <code>Click URL</code>. Un lien téléphone commence par <code>tel:</code>, un lien e-mail par <code>mailto:</code>.</p>
+  <h3>Solution A — deux déclencheurs, deux balises (acceptée)</h3>
+  <ul class="check-list">
+    <li>Déclencheur <code>Clic - telephone</code> : Clic – Liens uniquement, <code>Click URL</code> <em>commence par</em> <code>tel:</code>. Balise <code>clic_contact</code> avec le paramètre <code>moyen</code> = <code>telephone</code>.</li>
+    <li>Déclencheur <code>Clic - email</code> : <code>Click URL</code> <em>commence par</em> <code>mailto:</code>. Balise <code>clic_contact</code> avec <code>moyen</code> = <code>email</code>.</li>
+  </ul>
+  <h3>Solution B — une seule balise (la plus propre)</h3>
+  <ol class="steps-list">
+    <li>Variable <strong>Table d'expressions régulières</strong> nommée <code>RegEx - moyen de contact</code>, variable d'entrée <code>{{Click URL}}</code> :
+      <table class="param-table"><thead><tr><th>Modèle</th><th>Résultat</th></tr></thead><tbody>
+        <tr><td>^tel:</td><td>telephone</td></tr><tr><td>^mailto:</td><td>email</td></tr></tbody></table></li>
+    <li>Déclencheur : Clic – Liens uniquement, <code>Click URL</code> <em>correspond à l'expression régulière</em> <code>^(tel|mailto):</code>.</li>
+    <li>Balise <code>clic_contact</code> avec <code>moyen</code> = <code>{{RegEx - moyen de contact}}</code>.</li>
+  </ol>
+  <p class="expected"><strong>Test :</strong> sur la page Contact, un clic sur le numéro donne <code>moyen: telephone</code>, un clic sur l'adresse donne <code>moyen: email</code>. L'ordinateur peut proposer d'ouvrir une application : il suffit d'annuler.</p>
+</section>
+
+<section class="exo">
+  <h2>2.3 — Les réseaux sociaux <span class="pts">1 pt</span></h2>
+  <p><strong>Technique :</strong> une <strong>classe</strong> commune pour le déclencheur, un <strong>attribut</strong> pour la valeur. Dans le code, chaque lien a la forme <code>&lt;a class="social-link" data-network="instagram" …&gt;</code>.</p>
+  <ol class="steps-list">
+    <li>Variable <strong>Variable d'événement automatique</strong>, type <strong>Attribut de l'élément</strong>, nom de l'attribut <code>data-network</code>. Nom : <code>Clic - reseau</code>.</li>
+    <li>Déclencheur Clic – Liens uniquement : <code>Click Classes</code> <em>contient</em> <code>social-link</code>.</li>
+    <li>Balise <code>clic_reseau_social</code> avec le paramètre <code>reseau</code> = <code>{{Clic - reseau}}</code>.</li>
+  </ol>
+  <p><strong>Variante acceptée :</strong> <code>reseau</code> = <code>{{Click Text}}</code>. Elle donne « Instagram » avec une majuscule, et casse si le texte du lien change : c'est moins robuste.</p>
+  <div class="hint"><strong>À savoir :</strong> ces liens mènent vers d'autres sites. Avec la mesure améliorée, GA4 envoie aussi automatiquement un événement <code>click</code> (paramètre <code>outbound: true</code>). Ce n'est pas un doublon : c'est un événement générique pour tous les liens sortants, alors que <code>clic_reseau_social</code> répond à une question métier précise.</div>
+</section>
+
+<section class="exo">
+  <h2>2.4 — Le catalogue PDF <span class="pts">1 pt</span></h2>
+  <ol class="steps-list">
+    <li>Déclencheur Clic – Liens uniquement : <code>Click URL</code> <em>se termine par</em> <code>.pdf</code> (ou <em>contient</em> <code>catalogue</code>). Il couvre les deux liens : le bouton de la boutique et le lien du pied de page.</li>
+    <li>Balise <code>telechargement_catalogue</code> sur ce déclencheur.</li>
+  </ol>
+  <div class="hint"><strong>Réponse attendue à la question :</strong> GA4 envoie déjà un événement <code>file_download</code>, grâce à la <strong>mesure améliorée</strong> (option « Téléchargements de fichiers », activée par défaut sur le flux). Il détecte tout seul les clics vers des fichiers .pdf, .xlsx, .zip… On a donc deux événements pour un même clic. Deux réponses sont acceptées si elles sont justifiées :
+    <ul><li>garder les deux : <code>file_download</code> compte tous les fichiers, <code>telechargement_catalogue</code> isole le catalogue ;</li>
+    <li>ne garder que <code>file_download</code> et filtrer sur son paramètre <code>file_name</code> : on supprime alors sa propre balise, ou on désactive l'option dans le flux.</li></ul>
+  La mauvaise réponse est de ne pas avoir remarqué le doublon.</div>
+</section>
+
+<section class="exo">
+  <h2>2.5 — Le formulaire de contact <span class="pts">1,25 pt</span></h2>
+  <p>Le formulaire envoie vers <code>contact-merci.html?sujet=taille</code>. Seul le sujet apparaît dans l'adresse : le nom, l'e-mail et le message n'y sont volontairement pas, pour ne jamais faire remonter de données personnelles à GA4.</p>
+  <h3>Méthode recommandée — la page de remerciement</h3>
+  <ol class="steps-list">
+    <li>Variable <strong>URL</strong>, type de composant <strong>Requête</strong>, clé de requête <code>sujet</code>. Nom : <code>URL - sujet</code>.</li>
+    <li>Déclencheur <strong>Page vue</strong>, « Certaines pages vues » : <code>Page Path</code> <em>contient</em> <code>contact-merci</code>.</li>
+    <li>Balise <code>generate_lead</code> avec le paramètre <code>sujet</code> = <code>{{URL - sujet}}</code>.</li>
+  </ol>
+  <p><strong>Pourquoi c'est la meilleure :</strong> on n'arrive sur cette page qu'après un envoi réussi (champs remplis et valides). Limite : un visiteur qui recharge la page compte deux fois.</p>
+  <h3>Méthode acceptée — l'envoi du formulaire</h3>
+  <ol class="steps-list">
+    <li>Déclencheur <strong>Envoi de formulaire</strong>, cocher <strong>Vérifier la validation</strong>, « Certains formulaires » : <code>Form ID</code> <em>est égal à</em> <code>contact-form</code>.</li>
+    <li>Variable <strong>JavaScript personnalisé</strong> pour lire le sujet choisi :</li>
+  </ol>
+  <pre><code>function () {
+  return document.getElementById(&quot;contact-sujet&quot;).value;
+}</code></pre>
+  <ol class="steps-list" start="3"><li>Balise <code>generate_lead</code> avec <code>sujet</code> = cette variable.</li></ol>
+  <p class="expected"><strong>Test :</strong> envoyer le formulaire avec le sujet « Une question de taille » → <code>generate_lead</code> avec <code>sujet: taille</code>. Cliquer sur Envoyer avec un champ vide → rien ne part.</p>
+  <div class="hint"><strong>Le piège évité :</strong> ne jamais envoyer le contenu des champs nom, e-mail ou message à GA4. C'est interdit par les conditions d'utilisation de Google Analytics, et contraire au RGPD.</div>
+</section>
+
+<section class="exo">
+  <h2>Barème</h2>
+  <table class="param-table"><thead><tr><th>Critère</th><th>Points</th></tr></thead><tbody>
+    <tr><td>2.1 : déclencheur ciblé sur l'ID (pas sur tous les clics)</td><td>0,75</td></tr>
+    <tr><td>2.2 : les deux liens, avec la bonne valeur de <code>moyen</code></td><td>1</td></tr>
+    <tr><td>2.3 : classe + valeur du réseau en minuscules</td><td>1</td></tr>
+    <tr><td>2.4 : déclencheur sur les deux liens (0,5) + réponse sur <code>file_download</code> (0,5)</td><td>1</td></tr>
+    <tr><td>2.5 : <code>generate_lead</code> seulement après un envoi valide (0,75) + sujet (0,25) + choix justifié (0,25)</td><td>1,25</td></tr>
+  </tbody></table>
+</section>
+</div>
+</main>
+</body>
+</html>

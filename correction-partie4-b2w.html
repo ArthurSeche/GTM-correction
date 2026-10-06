@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Correction partie 4 | Examen Kop Store</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="topbar">Examen Google Tag Manager &amp; GA4 — <strong>correction</strong></div>
+<header class="site-header"><div class="wrap"><span class="logo"><span class="logo-mark"></span>Kop Store</span><span class="pill pill-red">Correction · Partie 4</span></div></header>
+<main>
+<div class="wrap exo-page">
+  <div class="exo-header"><span class="eyebrow">Correction · Partie 4</span><h1>Variables et exploitation dans GA4</h1></div>
+<section class="exo">
+  <h2>4.1 — La commande premium <span class="pts">1 pt</span></h2>
+  <ol class="steps-list">
+    <li>Variable <strong>Variable de couche de données</strong> <code>DLV - montant commande</code>, nom <code>ecommerce.value</code>, version 2.</li>
+    <li>Déclencheur <strong>Événement personnalisé</strong> <code>CE - purchase premium</code> : nom d'événement <code>purchase</code>, « Certains événements personnalisés », <code>DLV - montant commande</code> <em>supérieur ou égal à</em> <code>100</code>.</li>
+    <li>Balise Événement GA4 <code>commande_premium</code> sur ce déclencheur.</li>
+  </ol>
+  <p class="expected"><strong>Test :</strong> 1 maillot (90 €) → pas de <code>commande_premium</code> ; 2 maillots (180 €) → <code>commande_premium</code> part juste après <code>purchase</code>. Dans Tag Assistant, l'onglet Variables montre la valeur lue.</p>
+</section>
+
+<section class="exo">
+  <h2>4.2 — Les dimensions personnalisées <span class="pts">1 pt</span></h2>
+  <p>GA4 → Administration → <strong>Définitions personnalisées</strong> → <strong>Créer une dimension personnalisée</strong>, trois fois :</p>
+  <table class="param-table"><thead><tr><th>Nom de la dimension</th><th>Champ d'application</th><th>Paramètre d'événement</th></tr></thead><tbody>
+    <tr><td>Moyen de contact</td><td>Événement</td><td>moyen</td></tr>
+    <tr><td>Réseau social</td><td>Événement</td><td>reseau</td></tr>
+    <tr><td>Sujet du contact</td><td>Événement</td><td>sujet</td></tr>
+  </tbody></table>
+  <p>Le nom est libre ; le <strong>paramètre</strong> doit être écrit exactement comme dans les balises GTM. Une dimension ne se remplit qu'à partir de sa création.</p>
+</section>
+
+<section class="exo">
+  <h2>4.3 — Les événements clés <span class="pts">0,5 pt</span></h2>
+  <ol class="steps-list">
+    <li>GA4 → Administration → <strong>Événements clés</strong> → <strong>Nouvel événement clé</strong>.</li>
+    <li>Saisir <code>generate_lead</code>, enregistrer. Recommencer avec <code>commande_premium</code>.</li>
+  </ol>
+  <p>On peut aussi les marquer depuis la liste des événements (Administration → Événements), mais seulement une fois qu'ils ont été reçus. <code>purchase</code> est un événement clé par défaut.</p>
+</section>
+
+<section class="exo">
+  <h2>4.4 — L'exploration de l'entonnoir <span class="pts">1 pt</span></h2>
+  <ol class="steps-list">
+    <li>GA4 → <strong>Explorer</strong> → <strong>Exploration de l'entonnoir</strong>. Renommer l'exploration « Tunnel Kop Store ».</li>
+    <li>Dans « Étapes », cliquer sur le crayon et créer 6 étapes, chacune avec la condition <em>Nom de l'événement = …</em> :</li>
+  </ol>
+  <table class="param-table"><thead><tr><th>Étape</th><th>Événement</th></tr></thead><tbody>
+    <tr><td>1. Vue produit</td><td>view_item</td></tr><tr><td>2. Ajout au panier</td><td>add_to_cart</td></tr>
+    <tr><td>3. Début de commande</td><td>begin_checkout</td></tr><tr><td>4. Livraison</td><td>add_shipping_info</td></tr>
+    <tr><td>5. Paiement</td><td>add_payment_info</td></tr><tr><td>6. Achat</td><td>purchase</td></tr>
+  </tbody></table>
+  <p>Entonnoir <strong>ouvert</strong> ou <strong>fermé</strong> : les deux sont acceptés. Question de bilan : dans un entonnoir fermé, un visiteur qui arrive directement sur la page commande n'est pas compté. L'exploration sera vide tant que GA4 n'a pas traité les données (24 à 48 h).</p>
+</section>
+
+<section class="exo">
+  <h2>4.5 — L'audience « Paniers abandonnés » <span class="pts">0,5 pt</span></h2>
+  <ol class="steps-list">
+    <li>GA4 → Administration → <strong>Audiences</strong> → <strong>Nouvelle audience</strong> → <strong>Créer une audience personnalisée</strong>.</li>
+    <li>Nom : « Paniers abandonnés ». Inclure les utilisateurs quand : événement <code>add_to_cart</code>.</li>
+    <li>Cliquer sur <strong>Ajouter un groupe pour exclure</strong> : exclure les utilisateurs quand l'événement <code>purchase</code> se produit.</li>
+    <li>Durée d'appartenance : par exemple 30 jours. Enregistrer.</li>
+  </ol>
+  <p>Usage : relancer ces visiteurs avec une publicité ou un e-mail, si l'audience est partagée avec Google Ads.</p>
+</section>
+
+<section class="exo">
+  <h2>Barème</h2>
+  <table class="param-table"><thead><tr><th>Critère</th><th>Points</th></tr></thead><tbody>
+    <tr><td>4.1 : variable <code>ecommerce.value</code> + condition ≥ 100 + balise</td><td>1</td></tr>
+    <tr><td>4.2 : trois dimensions avec le bon paramètre</td><td>1</td></tr>
+    <tr><td>4.3 : deux événements clés</td><td>0,5</td></tr>
+    <tr><td>4.4 : exploration nommée, six étapes dans l'ordre</td><td>1</td></tr>
+    <tr><td>4.5 : audience avec inclusion et exclusion</td><td>0,5</td></tr>
+  </tbody></table>
+</section>
+</div>
+</main>
+</body>
+</html>
